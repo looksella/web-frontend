@@ -17,16 +17,21 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = async (email, password) => {
-    try {
-      const { data } = await authAPI.login({ email, password });
-      localStorage.setItem('token', data.token);
-      setUser({ token: data.token });
-      return { success: true };
-    } catch(err) {
-      return { success: false, error: err.response?.data?.message || 'Error al iniciar sesión' };
-    }
-  };
+ const login = async (email, password) => {
+  try {
+    const { data } = await authAPI.login({ email, password });
+
+    const accessToken = data.access_token; 
+
+    localStorage.setItem('token', accessToken);
+    setUser({ token: accessToken });
+
+    return { success: true };
+  } catch(err) {
+    return { success: false, error: err.response?.data?.message || 'Error al iniciar sesión' };
+  }
+};
+
 
   const logout = () => {
     localStorage.removeItem('token');

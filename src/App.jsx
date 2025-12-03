@@ -7,6 +7,7 @@ import ProductDetail from './pages/ProductDetail';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Profile from './pages/Profile';
+import { Toaster } from 'react-hot-toast';
 
 // Componente para rutas protegidas
 const ProtectedRoute = ({ children }) => {
@@ -44,6 +45,7 @@ function AppContent() {
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <Toaster position="top-right" />
       </main>
     </div>
   );
