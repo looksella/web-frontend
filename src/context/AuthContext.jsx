@@ -11,30 +11,72 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if(token) setUser({ token });
-    setLoading(false);
+    // Al iniciar, intentar recuperar usuario usando access_token o refresh_token
+    const initAuth = async () => {
+      const access = localStorage.getItem('access_token');
+      const refresh = localStorage.getItem('refresh_token');
+
+      if (access) {
+        try {
+          const { data } = await authAPI.me();
+          setUser(data);
+          setLoading(false);
+          return;
+        } catch (e) {
+          // Si me() falla, intentaremos refresh si existe
+        }
+      }
+
+      if (refresh) {
+        try {
+          const { data } = await authAPI.refresh(refresh);
+          localStorage.setItem('access_token', data.access_token);
+          localStorage.setItem('refresh_token', data.refresh_token);
+          const { data: me } = await authAPI.me();
+          setUser(me);
+        } catch (e) {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          setUser(null);
+        }
+      }
+
+      setLoading(false);
+    };
+
+    initAuth();
   }, []);
 
  const login = async (email, password) => {
   try {
     const { data } = await authAPI.login({ email, password });
 
-    const accessToken = data.access_token; 
+    const accessToken = data.access_token;
+    const refreshToken = data.refresh_token;
 
-    localStorage.setItem('token', accessToken);
-    setUser({ token: accessToken });
+    // Guardar ambos tokens
+    localStorage.setItem('access_token', accessToken);
+    localStorage.setItem('refresh_token', refreshToken);
+
+    // Obtener info del usuario
+    const { data: me } = await authAPI.me();
+    setUser(me);
 
     return { success: true };
-  } catch(err) {
+  } catch (err) {
     return { success: false, error: err.response?.data?.message || 'Error al iniciar sesión' };
   }
 };
 
 
-  const logout = () => {
-    localStorage.removeItem('token');
+  const logout = async () => {
+    try {
+      await authAPI.logout();
+    } catch (e) {
+      // ignore
+    }
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
     setUser(null);
   };
 
