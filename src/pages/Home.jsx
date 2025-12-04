@@ -85,12 +85,14 @@ const Home = () => {
           </div>
 
           <div className="relative">
-            <div className="relative z-10 bg-white rounded-3xl shadow-2xl overflow-hidden">
-              <img
-                src="/imagenes/hero-store.jpg"
-                alt="Vista de la tienda online"
-                className="w-full h-full object-cover"
-              />
+            <div className="relative z-10 bg-white rounded-3xl shadow-2xl overflow-hidden h-80">
+              <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                <div className="text-center p-8">
+                  <div className="text-6xl mb-4">🛍️</div>
+                  <h3 className="text-2xl font-bold text-[#0C2C47]">Tienda Online</h3>
+                  <p className="text-[#6B7280] mt-2">Los mejores productos te esperan</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -171,8 +173,8 @@ const Home = () => {
                   key={product.id}
                   className="bg-white rounded-2xl shadow-md hover:shadow-xl transition overflow-hidden flex flex-col"
                 >
-                  <div className="h-32 bg-[#ABC8CA] flex items-center justify-center">
-                    <span className="text-3xl">📦</span>
+                  <div className="h-32 bg-gradient-to-r from-blue-100 to-indigo-100 flex items-center justify-center">
+                    <span className="text-4xl">📦</span>
                   </div>
                   <div className="p-4 flex flex-col flex-1">
                     <p className="text-xs font-semibold text-[#2E5749] mb-1">
@@ -187,7 +189,7 @@ const Home = () => {
                     </p>
                     <div className="flex items-center justify-between mt-auto">
                       <span className="text-sm font-semibold text-[#BF512C]">
-                        ${Number(product.price).toFixed(2)}
+                        ${Number(product.price || 0).toFixed(2)}
                       </span>
                       <Link
                         to={`/products/${product.id}`}

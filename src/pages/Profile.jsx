@@ -1,142 +1,200 @@
-import React from "react";
-import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { User, Mail, LogOut, Edit } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { authAPI, productsAPI } from '../services/api';
+import { toast } from 'react-hot-toast';
+import Navbar from '../components/Navbar';
 
 const Profile = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user: authUser, logout } = useAuth();
+  const [user, setUser] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [stats, setStats] = useState({ reviews: 0, orders: 0, wishlist: 0 });
+  const [loading, setLoading] = useState(true);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setLoading(true);
+        
+        // Obtener datos completos del usuario
+        if (authUser) {
+          const { data: userData } = await authAPI.me();
+          setUser({
+            name: userData.name || 'Usuario',
+            email: userData.email || 'usuario@ejemplo.com',
+            avatar: userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'Usuario')}&background=0D8ABC&color=fff&size=128`,
+            joined: userData.created_at ? new Date(userData.created_at).toLocaleDateString('es-ES', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            }) : "Fecha no disponible"
+          });
+
+          // Obtener reseñas del usuario si el backend las proporciona
+          if (userData.reviews) {
+            setReviews(userData.reviews.slice(0, 3).map(review => ({
+              id: review.id,
+              product: review.product_name || 'Producto',
+              rating: review.rating || 5,
+              comment: review.comment || 'Sin comentario',
+              date: review.created_at ? new Date(review.created_at).toLocaleDateString('es-ES') : 'Fecha desconocida'
+            })));
+            setStats(prev => ({ ...prev, reviews: userData.reviews.length }));
+          }
+        }
+
+      } catch (error) {
+        console.error("Error cargando perfil:", error);
+        
+        // Datos de ejemplo si falla la API
+        setUser({
+          name: "Usuario Ejemplo",
+          email: "usuario@ejemplo.com",
+          avatar: "https://ui-avatars.com/api/?name=Usuario+Ejemplo&background=0D8ABC&color=fff&size=128",
+          joined: "15 de Octubre, 2023"
+        });
+        
+        setReviews([
+          { id: 1, product: "Camiseta Casual", rating: 5, comment: "¡Excelente calidad!", date: "Hace 2 días" },
+          { id: 2, product: "Zapatillas Deportivas", rating: 4, comment: "Muy cómodas para correr", date: "Hace 1 semana" }
+        ]);
+        
+        toast.error("No se pudieron cargar todos los datos del perfil");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (authUser) {
+      fetchUserData();
+    } else {
+      setLoading(false);
+    }
+  }, [authUser]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  const displayUser = user || {
+    name: "Usuario",
+    email: "usuario@ejemplo.com",
+    joined: "Fecha no disponible",
+    avatar: "https://ui-avatars.com/api/?name=Usuario&background=0D8ABC&color=fff&size=128"
+  };
+
+  const handleEditProfile = () => {
+    toast.success("Funcionalidad en desarrollo");
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-indigo-100 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center justify-center w-32 h-32 bg-linear-to-r from-indigo-500 to-purple-600 rounded-full shadow-2xl mb-8">
-            <User className="w-16 h-16 text-white" />
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Mi Perfil</h1>
-          <p className="text-xl text-gray-600">
-            Gestiona tu cuenta y preferencias
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-50 font-sans">
+      <Navbar />
 
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
-          <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-              <User className="w-7 h-7 mr-3 text-indigo-600" />
-              Información Personal
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-center p-4 bg-gray-50 rounded-2xl">
-                <Mail className="w-6 h-6 text-indigo-500 mr-4 shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Email</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {user?.email || "No disponible"}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center p-4 bg-gray-50 rounded-2xl">
-                <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center mr-4">
-                  <User className="w-5 h-5 text-indigo-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Nombre</p>
-                  <p className="text-lg font-semibold text-gray-900">
-                    {user?.name || "No disponible"}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-              <svg
-                className="w-7 h-7 mr-3 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+      <div className="max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+        <div className="bg-white shadow-lg rounded-2xl overflow-hidden mb-8">
+          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-40"></div>
+          
+          <div className="px-6 pb-8">
+            <div className="relative flex flex-col md:flex-row items-center md:items-end -mt-16 mb-6">
+              <div className="relative">
+                <img 
+                  className="w-32 h-32 rounded-full border-4 border-white shadow-md bg-white object-cover"
+                  src={displayUser.avatar}
+                  alt="Foto de perfil" 
                 />
-              </svg>
-              Estado de Cuenta
-            </h2>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-2xl border-2 border-emerald-200">
-                <div>
-                  <p className="text-sm font-medium text-emerald-800">
-                    Cuenta Verificada
-                  </p>
-                  <p className="text-lg font-bold text-emerald-900">Activa</p>
-                </div>
-                <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 bg-blue-50 rounded-xl">
-                  <div className="text-2xl font-bold text-blue-600 mb-1">
-                    12
-                  </div>
-                  <div className="text-sm text-blue-700 font-medium">
-                    Productos Creados
-                  </div>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-xl">
-                  <div className="text-2xl font-bold text-purple-600 mb-1">
-                    47
-                  </div>
-                  <div className="text-sm text-purple-700 font-medium">
-                    Valoraciones
-                  </div>
-                </div>
+              
+              <div className="mt-4 md:mt-0 md:ml-6 text-center md:text-left flex-1">
+                <h1 className="text-3xl font-bold text-gray-900">{displayUser.name}</h1>
+                <p className="text-gray-600 font-medium">{displayUser.email}</p>
+                <p className="text-gray-400 text-sm mt-1">Miembro desde: {displayUser.joined}</p>
+              </div>
+
+              <div className="mt-6 md:mt-0">
+                <button 
+                  onClick={handleEditProfile}
+                  className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-6 rounded-lg shadow-sm transition duration-200"
+                >
+                  Editar Perfil
+                </button>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl p-8 border border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">
-            Acciones Rápidas
-          </h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <button className="group flex items-center p-6 bg-linear-to-r from-indigo-50 to-blue-50 border-2 border-indigo-200 rounded-2xl hover:border-indigo-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
-              <div className="w-14 h-14 bg-indigo-100 rounded-2xl flex items-center justify-center mr-4 group-hover:bg-indigo-200 transition-colors">
-                <Edit className="w-6 h-6 text-indigo-600" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-1 space-y-6">
+            <div className="bg-white shadow rounded-xl p-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Resumen</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Reseñas escritas</span>
+                  <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{stats.reviews}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Pedidos totales</span>
+                  <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{stats.orders}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Lista de deseos</span>
+                  <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{stats.wishlist}</span>
+                </div>
               </div>
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-1">
-                  Editar Perfil
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Actualiza tu información personal
-                </p>
-              </div>
-            </button>
+            </div>
+          </div>
 
-            <button
-              onClick={handleLogout}
-              className="group flex items-center p-6 bg-linear-to-r from-red-50 to-red-100 border-2 border-red-200 rounded-2xl hover:border-red-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-            >
-              <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center mr-4 group-hover:bg-red-200 transition-colors">
-                <LogOut className="w-6 h-6 text-red-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-red-600 mb-1">
-                  Cerrar Sesión
-                </h3>
-                <p className="text-sm text-red-500">Salir de tu cuenta</p>
-              </div>
-            </button>
+          <div className="md:col-span-2">
+            <div className="bg-white shadow rounded-xl p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <span className="text-2xl">⭐</span> Mis Reseñas
+              </h2>
+              
+              {reviews.length > 0 ? (
+                <div className="space-y-6">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="border-b border-gray-100 last:border-0 pb-6 last:pb-0">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold text-gray-900 text-lg">{review.product}</h3>
+                        <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">{review.date}</span>
+                      </div>
+                      
+                      <div className="flex items-center mb-3">
+                        {[...Array(5)].map((_, i) => (
+                          <svg key={i} className={`w-5 h-5 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      
+                      <p className="text-gray-600 italic bg-gray-50 p-3 rounded-lg border border-gray-100">
+                        "{review.comment}"
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>Aún no has escrito ninguna reseña.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <button 
+                onClick={logout}
+                className="flex items-center gap-2 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 font-semibold py-3 px-6 rounded-lg transition duration-200 border border-red-100"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Cerrar Sesión
+              </button>
+            </div>
           </div>
         </div>
       </div>
