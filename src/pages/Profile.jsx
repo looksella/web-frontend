@@ -93,8 +93,6 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
-      <Navbar />
-
       <div className="max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
         <div className="bg-white shadow-lg rounded-2xl overflow-hidden mb-8">
           <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-40"></div>
